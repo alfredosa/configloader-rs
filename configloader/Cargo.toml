@@ -1,0 +1,7 @@
+[package]
+name = "configloader"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+configloader_derive = { path = "../configloader_derive" }
