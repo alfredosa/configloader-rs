@@ -17,6 +17,9 @@ const ATTR_PREFIX: &str = "prefix";
 // TODO load_fn
 // load_fn maybe uses a fn name that does load() instead?
 // Many a feature, for now I move on to making other stuff.
+// TODO: THE expanded macro leaves a lot to desire, readability is weird.
+// I see serde does __private methods to lean out the gen code.
+// Does that even matter? Yes for debugging, not for the end user (??? idk)
 #[proc_macro_derive(ConfigLoader, attributes(skip, nested, default, env, load_fn, prefix))]
 pub fn config_loader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
