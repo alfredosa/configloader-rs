@@ -5,7 +5,7 @@ use proc_macro::TokenStream;
 // ecosystem-facing type used in quote and syn, interesting.
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use syn::{parse_macro_input, Data, DeriveInput, Fields};
+use syn::{Data, DeriveInput, Fields, parse_macro_input};
 
 // Clean constants :)
 const ATTR_SKIP: &str = "skip";
