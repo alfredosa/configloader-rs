@@ -2,6 +2,13 @@
 name = "configloader"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.85"
+description = "Derive-based environment variable configuration loader for Rust structs"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/alfredosa/configloader-rs"
+readme = "../README.md"
+keywords = ["config", "env", "derive", "environment"]
+categories = ["config"]
 
 [dependencies]
-configloader_derive = { path = "../configloader_derive" }
+configloader_derive = { version = "0.1.0", path = "../configloader_derive" }

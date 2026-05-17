@@ -3,4 +3,5 @@ resolver = "2"
 members = [
     "configloader",
     "configloader_derive",
+    "test_suite",
 ]

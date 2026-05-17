@@ -1,5 +1,10 @@
 # configloader-rs... loads your config.
 
+configloader-rs serializes the environment into your struct through proc macros and struct "annotations".
+
+Why? It makes it easy to not repeat yourself. The struct already has naming conventions we want (*most of the time*)
+out of the environment to get the correct details.
+
 Imagine you have the following:
 
 ```rust
