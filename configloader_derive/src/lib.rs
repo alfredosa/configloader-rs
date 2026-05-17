@@ -23,7 +23,11 @@ const ATTR_PREFIX: &str = "prefix";
 #[proc_macro_derive(ConfigLoader, attributes(skip, nested, default, env, load_fn, prefix))]
 pub fn config_loader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
-    let top_level_prefix = get_attr_string(&input.attrs, ATTR_PREFIX).unwrap_or_default();
+    let top_level_prefix = match get_attr_string(&input.attrs, ATTR_PREFIX) {
+        Ok(Some(prefix)) => prefix,
+        Ok(None) => String::new(),
+        Err(err) => return err.to_compile_error().into(),
+    };
     let name = input.ident;
 
     let fields = match input.data {
@@ -52,8 +56,11 @@ pub fn config_loader(input: TokenStream) -> TokenStream {
         // TODO: this can be wrong MyTest -> MYTEST
         // Maybe Snakifying it would be better but don't feel like implementing this yet.
         let env_name = match has_attr(&field.attrs, ATTR_ENV) {
-            true => get_attr_string(&field.attrs, ATTR_ENV)
-                .expect("Expected a string in the env property"),
+            true => match get_attr_string(&field.attrs, ATTR_ENV) {
+                Ok(Some(env_name)) => env_name,
+                Ok(None) => unreachable!("checked env attr presence"),
+                Err(err) => return err.to_compile_error().into(),
+            },
             false => field_name.to_string().to_uppercase(),
         };
 
@@ -98,16 +105,17 @@ pub fn config_loader(input: TokenStream) -> TokenStream {
         });
 
         let true_val = match get_attr_string(&field.attrs, ATTR_DEFAULT) {
-            Some(default) => {
+            Ok(Some(default)) => {
                 quote! {
                     ::std::env::var(&env_name).unwrap_or_else(|_| #default.to_string())
                 }
             }
-            None => {
+            Ok(None) => {
                 quote! {::std::env::var(&env_name)
                     .expect("checked required environment variable presence")
                 }
             }
+            Err(err) => return err.to_compile_error().into(),
         };
 
         field_inits.push(quote! {
@@ -162,10 +170,14 @@ fn has_attr(attrs: &[syn::Attribute], name: &str) -> bool {
     attrs.iter().any(|attr| attr.path().is_ident(name))
 }
 
-fn get_attr_string(attrs: &[syn::Attribute], name: &str) -> Option<String> {
+fn get_attr_string(attrs: &[syn::Attribute], name: &str) -> syn::Result<Option<String>> {
     attrs
         .iter()
         .find(|attr| attr.path().is_ident(name))
-        .and_then(|attr| attr.parse_args::<syn::LitStr>().ok())
-        .map(|lit| lit.value())
+        .map(|attr| {
+            attr.parse_args::<syn::LitStr>()
+                .map(|lit| lit.value())
+                .map_err(|_| syn::Error::new_spanned(attr, format!("expected #[{name}(\"...\")]")))
+        })
+        .transpose()
 }

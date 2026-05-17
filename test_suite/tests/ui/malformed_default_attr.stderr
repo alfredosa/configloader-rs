@@ -1,0 +1,5 @@
+error: expected #[default("...")]
+ --> tests/ui/malformed_default_attr.rs:5:5
+  |
+5 |     #[default(8080)]
+  |     ^^^^^^^^^^^^^^^^

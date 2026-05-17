@@ -1,0 +1,5 @@
+error: expected #[env("...")]
+ --> tests/ui/malformed_env_attr.rs:5:5
+  |
+5 |     #[env(PORT)]
+  |     ^^^^^^^^^^^^

@@ -7,3 +7,6 @@ publish = false
 [dependencies]
 configloader = { path = "../configloader" }
 url = "2"
+
+[dev-dependencies]
+trybuild = "1"
