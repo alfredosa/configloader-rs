@@ -6,3 +6,4 @@ publish = false
 
 [dependencies]
 configloader = { path = "../configloader" }
+url = "2"

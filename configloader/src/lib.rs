@@ -2,12 +2,12 @@ pub use configloader_derive::ConfigLoader;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ConfigError {
-    MissingVars(Vec<&'static str>),
-    InvalidVar { name: &'static str, message: String },
+    MissingVars(Vec<String>),
+    InvalidVar { name: String, message: String },
 }
 
 impl ConfigError {
-    pub fn missing_vars(&self) -> &[&'static str] {
+    pub fn missing_vars(&self) -> &[String] {
         match self {
             Self::MissingVars(vars) => vars,
             Self::InvalidVar { .. } => &[],
@@ -35,5 +35,9 @@ impl std::fmt::Display for ConfigError {
 impl std::error::Error for ConfigError {}
 
 pub trait ConfigLoader: Sized {
-    fn load() -> Result<Self, ConfigError>;
+    fn load() -> Result<Self, ConfigError> {
+        Self::load_with_prefix("")
+    }
+
+    fn load_with_prefix(prefix: &str) -> Result<Self, ConfigError>;
 }

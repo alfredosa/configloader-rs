@@ -1,13 +1,26 @@
 extern crate proc_macro;
 
+// it seems that TokenStream is the compiler-facing type
 use proc_macro::TokenStream;
+// ecosystem-facing type used in quote and syn, interesting.
+use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{parse_macro_input, Data, DeriveInput, Fields};
 
-// TODO env, default, load_fn
-#[proc_macro_derive(ConfigLoader, attributes(skip, nested, default, env, load_fn))]
+// Clean constants :)
+const ATTR_SKIP: &str = "skip";
+const ATTR_NESTED: &str = "nested";
+const ATTR_DEFAULT: &str = "default";
+const ATTR_ENV: &str = "env";
+const ATTR_PREFIX: &str = "prefix";
+
+// TODO load_fn
+// load_fn maybe uses a fn name that does load() instead?
+// Many a feature, for now I move on to making other stuff.
+#[proc_macro_derive(ConfigLoader, attributes(skip, nested, default, env, load_fn, prefix))]
 pub fn config_loader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
+    let top_level_prefix = get_attr_string(&input.attrs, ATTR_PREFIX).unwrap_or_default();
     let name = input.ident;
 
     let fields = match input.data {
@@ -35,45 +48,60 @@ pub fn config_loader(input: TokenStream) -> TokenStream {
         let field_type = field.ty;
         // TODO: this can be wrong MyTest -> MYTEST
         // Maybe Snakifying it would be better but don't feel like implementing this yet.
-        let env_name = field_name.to_string().to_uppercase();
-        let has_default = has_attr(&field.attrs, "default");
+        let env_name = match has_attr(&field.attrs, ATTR_ENV) {
+            true => get_attr_string(&field.attrs, ATTR_ENV)
+                .expect("Expected a string in the env property"),
+            false => field_name.to_string().to_uppercase(),
+        };
 
-        if has_attr(&field.attrs, "skip") {
+        let env_name_expr = env_name_expr(&env_name);
+        let has_default = has_attr(&field.attrs, ATTR_DEFAULT);
+
+        if has_attr(&field.attrs, ATTR_SKIP) {
             field_inits.push(quote! {
                 #field_name: ::std::default::Default::default()
             });
             continue;
         }
 
-        if has_attr(&field.attrs, "nested") {
+        if has_attr(&field.attrs, ATTR_NESTED) {
             missing_checks.push(quote! {
+                let nested_prefix = #env_name_expr;
+
                 if let ::std::result::Result::Err(configloader::ConfigError::MissingVars(mut nested_missing_vars)) =
-                    <#field_type as configloader::ConfigLoader>::load()
+                    <#field_type as configloader::ConfigLoader>::load_with_prefix(&nested_prefix)
                 {
                     missing_vars.append(&mut nested_missing_vars);
                 }
             });
 
             field_inits.push(quote! {
-                #field_name: <#field_type as configloader::ConfigLoader>::load()?
+                #field_name: {
+                    let nested_prefix = #env_name_expr;
+
+                    <#field_type as configloader::ConfigLoader>::load_with_prefix(&nested_prefix)?
+                }
             });
             continue;
         }
 
         // Simple way of checking the existance of a given var. Omits defaulted tags.
         missing_checks.push(quote! {
-            if !#has_default && ::std::env::var_os(#env_name).is_none() {
-                missing_vars.push(#env_name);
+            let env_name = #env_name_expr;
+
+            if !#has_default && ::std::env::var_os(&env_name).is_none() {
+                missing_vars.push(env_name);
             }
         });
 
-        let true_val = match has_default {
-            true => {
-                let def = get_attr_string(&field.attrs, "default");
-                quote! {#def}
+        let true_val = match get_attr_string(&field.attrs, ATTR_DEFAULT) {
+            Some(default) => {
+                quote! {
+                    ::std::env::var(&env_name).unwrap_or_else(|_| #default.to_string())
+                }
             }
-            false => {
-                quote! {::std::env::var(#env_name)
+            None => {
+                quote! {::std::env::var(&env_name)
                     .expect("checked required environment variable presence")
                 }
             }
@@ -81,9 +109,10 @@ pub fn config_loader(input: TokenStream) -> TokenStream {
 
         field_inits.push(quote! {
             #field_name: {
+                let env_name = #env_name_expr;
                 let value = #true_val;
                 value.parse::<#field_type>().map_err(|err| configloader::ConfigError::InvalidVar {
-                    name: #env_name,
+                    name: env_name,
                     message: err.to_string(),
                 })?
             }
@@ -93,6 +122,11 @@ pub fn config_loader(input: TokenStream) -> TokenStream {
     let expanded = quote! {
         impl configloader::ConfigLoader for #name {
             fn load() -> ::std::result::Result<Self, configloader::ConfigError> {
+                <Self as configloader::ConfigLoader>::load_with_prefix(#top_level_prefix)
+            }
+
+
+            fn load_with_prefix(prefix: &str) -> ::std::result::Result<Self, configloader::ConfigError> {
                 let mut missing_vars = ::std::vec::Vec::new();
 
                 #(#missing_checks)*
@@ -109,6 +143,16 @@ pub fn config_loader(input: TokenStream) -> TokenStream {
     };
 
     expanded.into()
+}
+
+fn env_name_expr(env_name: &str) -> TokenStream2 {
+    quote! {
+        if prefix.is_empty() {
+            #env_name.to_string()
+        } else {
+            ::std::format!("{}_{}", prefix, #env_name)
+        }
+    }
 }
 
 fn has_attr(attrs: &[syn::Attribute], name: &str) -> bool {

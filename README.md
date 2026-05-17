@@ -8,28 +8,33 @@ out of the environment to get the correct details.
 Imagine you have the following:
 
 ```rust
-// You import this beautiful lib.
-use configloader::{ConfigError, ConfigLoader};
+use configloader::ConfigLoader;
 
 #[derive(Debug, PartialEq, ConfigLoader)]
+#[prefix("APP")]
 struct AppConfig {
-    app_name: String,
+    name: String,
     port: u16,
 
-    #[default("wow cool val")]
-    def_val: String,
+    // ENV wins when it exists, otherwise this kicks in.
+    #[default("false")]
+    debug: bool,
 
-    #[default("123")]
-    u_def_val: u32,
+    // Default::default(), don't go looking in ENV for this.
+    #[skip]
+    runtime_only_secret: String,
 
     #[nested]
     database: DatabaseConfig,
+
+    #[nested]
+    cache: CacheConfig,
 }
 
 #[derive(Debug, PartialEq, ConfigLoader)]
 struct DatabaseConfig {
-    host: String,
-    db_port: u16,
+    url: String,
+    max_connections: u32,
 
     #[nested]
     credentials: CredentialsConfig,
@@ -38,38 +43,71 @@ struct DatabaseConfig {
 #[derive(Debug, PartialEq, ConfigLoader)]
 struct CredentialsConfig {
     username: String,
-
-	// Value should be Default::default() :)
-    #[skip]
     password: String,
 }
 
-// and then!
+#[derive(Debug, PartialEq, ConfigLoader)]
+struct CacheConfig {
+    host: String,
 
+    #[default("6379")]
+    port: u16,
+}
 
-#[test]
-fn loads_double_nested_config_from_env() {
-    let _guard = ENV_LOCK.lock().unwrap();
+fn main() -> Result<(), configloader::ConfigError> {
+    let config = AppConfig::load()?;
 
-    unsafe {
-        std::env::set_var("APP_NAME", "boring-oidc");
-        std::env::set_var("PORT", "8080");
-        std::env::set_var("HOST", "localhost");
-        std::env::set_var("DB_PORT", "5432");
-        std::env::set_var("USERNAME", "admin");
-    }
-
-    let config = AppConfig::load().unwrap();
-
-	// And now you can just check the cool stuff
-    assert_eq!(config.app_name, "boring-oidc");
+    assert_eq!(config.name, "boring-oidc");
     assert_eq!(config.port, 8080);
-    assert_eq!(config.database.host, "localhost");
-    assert_eq!(config.database.db_port, 5432);
+    assert_eq!(config.debug, false);
+    assert_eq!(config.database.url, "postgres://localhost/app");
+    assert_eq!(config.database.max_connections, 10);
     assert_eq!(config.database.credentials.username, "admin");
-    assert_eq!(config.database.credentials.password, "");
-	assert_eq!(config.def_val, "wow cool val");
-    assert_eq!(config.u_def_val, 123);
+    assert_eq!(config.cache.host, "localhost");
+    assert_eq!(config.cache.port, 6379);
+    assert_eq!(config.runtime_only_secret, "");
+
+    Ok(())
 }
 ```
 
+And then your env looks like this:
+
+```sh
+APP_NAME=boring-oidc
+APP_PORT=8080
+APP_DATABASE_URL=postgres://localhost/app
+APP_DATABASE_MAX_CONNECTIONS=10
+APP_DATABASE_CREDENTIALS_USERNAME=admin
+APP_DATABASE_CREDENTIALS_PASSWORD=not-for-your-readme-probably
+APP_CACHE_HOST=localhost
+```
+
+Names are just the field names uppercased. Nested structs get the parent field name slapped in front:
+
+```text
+database.url -> DATABASE_URL
+database.credentials.username -> DATABASE_CREDENTIALS_USERNAME
+```
+
+If you add `#[prefix("APP")]` at the top, everything starts with `APP_`.
+
+Defaults are fallbacks, not hardcoded overrides. So this:
+
+```rust
+#[default("6379")]
+port: u16,
+```
+
+means `APP_CACHE_PORT` wins if it exists, otherwise `6379` is used.
+
+If you don't want a top level prefix, don't add one:
+
+```rust
+#[derive(ConfigLoader)]
+struct AppConfig {
+    port: u16,
+}
+```
+
+That one reads `PORT`.
