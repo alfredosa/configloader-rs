@@ -4,14 +4,14 @@ version = 4
 
 [[package]]
 name = "configloader"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "configloader_derive",
 ]
 
 [[package]]
 name = "configloader_derive"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "proc-macro2",
  "quote",
