@@ -49,13 +49,13 @@ fn nests_prefixes_by_field_name_for_multiple_branches() {
     let _guard = ENV_LOCK.lock().unwrap();
 
     unsafe {
-        std::env::set_var("SERVICE_NAME", "accounts");
-        std::env::set_var("DATABASE_HOST", "db.internal");
-        std::env::set_var("DATABASE_PORT", "5432");
-        std::env::set_var("DATABASE_CREDENTIALS_USERNAME", "admin");
-        std::env::set_var("DATABASE_CREDENTIALS_PASSWORD", "secret");
-        std::env::set_var("CACHE_ENDPOINT", "redis://cache.internal:6379");
-        std::env::set_var("CACHE_TTL_SECONDS", "30");
+        std::env::set_var("ROOT_CONFIG_SERVICE_NAME", "accounts");
+        std::env::set_var("ROOT_CONFIG_DATABASE_HOST", "db.internal");
+        std::env::set_var("ROOT_CONFIG_DATABASE_PORT", "5432");
+        std::env::set_var("ROOT_CONFIG_DATABASE_CREDENTIALS_USERNAME", "admin");
+        std::env::set_var("ROOT_CONFIG_DATABASE_CREDENTIALS_PASSWORD", "secret");
+        std::env::set_var("ROOT_CONFIG_CACHE_ENDPOINT", "redis://cache.internal:6379");
+        std::env::set_var("ROOT_CONFIG_CACHE_TTL_SECONDS", "30");
     }
 
     let config = RootConfig::load().unwrap();

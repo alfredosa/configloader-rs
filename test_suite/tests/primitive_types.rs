@@ -33,18 +33,18 @@ fn loads_all_signed_and_unsigned_integer_types() {
     let _guard = ENV_LOCK.lock().unwrap();
 
     unsafe {
-        std::env::set_var("I8_VALUE", "-8");
-        std::env::set_var("I16_VALUE", "-1600");
-        std::env::set_var("I32_VALUE", "-320000");
-        std::env::set_var("I64_VALUE", "-6400000000");
-        std::env::set_var("I128_VALUE", "-128000000000000000000");
-        std::env::set_var("ISIZE_VALUE", "-42");
-        std::env::set_var("U8_VALUE", "8");
-        std::env::set_var("U16_VALUE", "1600");
-        std::env::set_var("U32_VALUE", "320000");
-        std::env::set_var("U64_VALUE", "6400000000");
-        std::env::set_var("U128_VALUE", "128000000000000000000");
-        std::env::set_var("USIZE_VALUE", "42");
+        std::env::set_var("INTEGER_CONFIG_I8_VALUE", "-8");
+        std::env::set_var("INTEGER_CONFIG_I16_VALUE", "-1600");
+        std::env::set_var("INTEGER_CONFIG_I32_VALUE", "-320000");
+        std::env::set_var("INTEGER_CONFIG_I64_VALUE", "-6400000000");
+        std::env::set_var("INTEGER_CONFIG_I128_VALUE", "-128000000000000000000");
+        std::env::set_var("INTEGER_CONFIG_ISIZE_VALUE", "-42");
+        std::env::set_var("INTEGER_CONFIG_U8_VALUE", "8");
+        std::env::set_var("INTEGER_CONFIG_U16_VALUE", "1600");
+        std::env::set_var("INTEGER_CONFIG_U32_VALUE", "320000");
+        std::env::set_var("INTEGER_CONFIG_U64_VALUE", "6400000000");
+        std::env::set_var("INTEGER_CONFIG_U128_VALUE", "128000000000000000000");
+        std::env::set_var("INTEGER_CONFIG_USIZE_VALUE", "42");
     }
 
     let config = IntegerConfig::load().unwrap();
@@ -68,11 +68,11 @@ fn loads_bool_char_string_and_float_types() {
     let _guard = ENV_LOCK.lock().unwrap();
 
     unsafe {
-        std::env::set_var("BOOL_VALUE", "true");
-        std::env::set_var("CHAR_VALUE", "x");
-        std::env::set_var("STRING_VALUE", "hello");
-        std::env::set_var("F32_VALUE", "3.5");
-        std::env::set_var("F64_VALUE", "2.25");
+        std::env::set_var("SCALAR_CONFIG_BOOL_VALUE", "true");
+        std::env::set_var("SCALAR_CONFIG_CHAR_VALUE", "x");
+        std::env::set_var("SCALAR_CONFIG_STRING_VALUE", "hello");
+        std::env::set_var("SCALAR_CONFIG_F32_VALUE", "3.5");
+        std::env::set_var("SCALAR_CONFIG_F64_VALUE", "2.25");
     }
 
     let config = ScalarConfig::load().unwrap();

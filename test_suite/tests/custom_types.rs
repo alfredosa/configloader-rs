@@ -70,8 +70,8 @@ fn loads_custom_from_str_types() {
     let _guard = ENV_LOCK.lock().unwrap();
 
     unsafe {
-        std::env::set_var("API_KEY", "key_123");
-        std::env::set_var("ALLOWED_ORIGINS", "https://a.example, https://b.example");
+        std::env::set_var("CUSTOM_TYPE_CONFIG_API_KEY", "key_123");
+        std::env::set_var("CUSTOM_TYPE_CONFIG_ALLOWED_ORIGINS", "https://a.example, https://b.example");
     }
 
     let config = CustomTypeConfig::load().unwrap();
@@ -91,8 +91,8 @@ fn reports_custom_from_str_error_messages() {
     let _guard = ENV_LOCK.lock().unwrap();
 
     unsafe {
-        std::env::set_var("API_KEY", "invalid");
-        std::env::set_var("ALLOWED_ORIGINS", "https://a.example");
+        std::env::set_var("CUSTOM_TYPE_CONFIG_API_KEY", "invalid");
+        std::env::set_var("CUSTOM_TYPE_CONFIG_ALLOWED_ORIGINS", "https://a.example");
     }
 
     let err = CustomTypeConfig::load().unwrap_err();
@@ -100,7 +100,7 @@ fn reports_custom_from_str_error_messages() {
     assert_eq!(
         err,
         ConfigError::InvalidVar {
-            name: "API_KEY".to_string(),
+            name: "CUSTOM_TYPE_CONFIG_API_KEY".to_string(),
             message: "api key must start with key_".to_string(),
         }
     );

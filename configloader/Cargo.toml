@@ -1,6 +1,6 @@
 [package]
 name = "configloader"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 rust-version = "1.85"
 description = "Derive-based environment variable configuration loader for Rust structs"
@@ -11,4 +11,4 @@ keywords = ["config", "env", "derive", "environment"]
 categories = ["config"]
 
 [dependencies]
-configloader_derive = { version = "0.1.2", path = "../configloader_derive" }
+configloader_derive = { version = "0.1.3", path = "../configloader_derive" }

@@ -5,7 +5,7 @@ use proc_macro::TokenStream;
 // ecosystem-facing type used in quote and syn, interesting.
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use syn::{Data, DeriveInput, Fields, parse_macro_input};
+use syn::{parse_macro_input, Data, DeriveInput, Fields};
 
 // Clean constants :)
 const ATTR_SKIP: &str = "skip";
@@ -14,21 +14,15 @@ const ATTR_DEFAULT: &str = "default";
 const ATTR_ENV: &str = "env";
 const ATTR_PREFIX: &str = "prefix";
 
-// TODO load_fn
-// load_fn maybe uses a fn name that does load() instead?
-// Many a feature, for now I move on to making other stuff.
-// TODO: THE expanded macro leaves a lot to desire, readability is weird.
-// I see serde does __private methods to lean out the gen code.
-// Does that even matter? Yes for debugging, not for the end user (??? idk)
 #[proc_macro_derive(ConfigLoader, attributes(skip, nested, default, env, load_fn, prefix))]
 pub fn config_loader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
+    let name = input.ident;
     let top_level_prefix = match get_attr_string(&input.attrs, ATTR_PREFIX) {
         Ok(Some(prefix)) => prefix,
-        Ok(None) => String::new(),
+        Ok(None) => to_screaming_snake_case(&name.to_string()),
         Err(err) => return err.to_compile_error().into(),
     };
-    let name = input.ident;
 
     let fields = match input.data {
         Data::Struct(data_struct) => match data_struct.fields {
@@ -53,15 +47,14 @@ pub fn config_loader(input: TokenStream) -> TokenStream {
     for field in fields {
         let field_name = field.ident.expect("named field");
         let field_type = field.ty;
-        // TODO: this can be wrong MyTest -> MYTEST
-        // Maybe Snakifying it would be better but don't feel like implementing this yet.
+        
         let env_name = match has_attr(&field.attrs, ATTR_ENV) {
             true => match get_attr_string(&field.attrs, ATTR_ENV) {
                 Ok(Some(env_name)) => env_name,
                 Ok(None) => unreachable!("checked env attr presence"),
                 Err(err) => return err.to_compile_error().into(),
             },
-            false => field_name.to_string().to_uppercase(),
+            false => to_screaming_snake_case(&field_name.to_string()),
         };
 
         let env_name_expr = env_name_expr(&env_name);
@@ -180,4 +173,22 @@ fn get_attr_string(attrs: &[syn::Attribute], name: &str) -> syn::Result<Option<S
                 .map_err(|_| syn::Error::new_spanned(attr, format!("expected #[{name}(\"...\")]")))
         })
         .transpose()
+}
+
+fn to_screaming_snake_case(s: &str) -> String {
+    let mut res = String::with_capacity(s.len());
+    let mut chars = s.chars().peekable();
+    let mut prev_is_uppercase = false;
+
+    while let Some(c) = chars.next() {
+        if !res.is_empty() && c.is_uppercase() {
+            let next_is_lowercase = chars.peek().map(|n| n.is_lowercase()).unwrap_or(false);
+            if !prev_is_uppercase || next_is_lowercase {
+                res.push('_');
+            }
+        }
+        res.push(c.to_ascii_uppercase());
+        prev_is_uppercase = c.is_uppercase();
+    }
+    res
 }

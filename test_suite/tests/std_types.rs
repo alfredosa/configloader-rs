@@ -29,13 +29,13 @@ fn loads_standard_library_from_str_types() {
     let _guard = ENV_LOCK.lock().unwrap();
 
     unsafe {
-        std::env::set_var("IP_ADDR", "127.0.0.1");
-        std::env::set_var("IPV4_ADDR", "192.168.1.10");
-        std::env::set_var("IPV6_ADDR", "::1");
-        std::env::set_var("SOCKET_ADDR", "127.0.0.1:8080");
-        std::env::set_var("PATH_BUF", "/tmp/configloader");
-        std::env::set_var("NON_ZERO_I32", "-7");
-        std::env::set_var("NON_ZERO_USIZE", "9");
+        std::env::set_var("STANDARD_LIBRARY_CONFIG_IP_ADDR", "127.0.0.1");
+        std::env::set_var("STANDARD_LIBRARY_CONFIG_IPV4_ADDR", "192.168.1.10");
+        std::env::set_var("STANDARD_LIBRARY_CONFIG_IPV6_ADDR", "::1");
+        std::env::set_var("STANDARD_LIBRARY_CONFIG_SOCKET_ADDR", "127.0.0.1:8080");
+        std::env::set_var("STANDARD_LIBRARY_CONFIG_PATH_BUF", "/tmp/configloader");
+        std::env::set_var("STANDARD_LIBRARY_CONFIG_NON_ZERO_I32", "-7");
+        std::env::set_var("STANDARD_LIBRARY_CONFIG_NON_ZERO_USIZE", "9");
     }
 
     let config = StandardLibraryConfig::load().unwrap();
@@ -57,9 +57,9 @@ fn loads_url_types() {
     let _guard = ENV_LOCK.lock().unwrap();
 
     unsafe {
-        std::env::set_var("BASE_URL", "https://example.com/api");
+        std::env::set_var("URL_CONFIG_BASE_URL", "https://example.com/api");
         std::env::set_var(
-            "CALLBACK_URL",
+            "URL_CONFIG_CALLBACK_URL",
             "https://example.com/oauth/callback?state=ready",
         );
     }

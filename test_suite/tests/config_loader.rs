@@ -49,11 +49,11 @@ fn loads_double_nested_config_from_env() {
     let _guard = ENV_LOCK.lock().unwrap();
 
     unsafe {
-        std::env::set_var("APP_NAME", "boring-oidc");
-        std::env::set_var("PORT", "8080");
-        std::env::set_var("DATABASE_HOST", "localhost");
-        std::env::set_var("DATABASE_DB_PORT", "5432");
-        std::env::set_var("DATABASE_CREDENTIALS_USERNAME", "admin");
+        std::env::set_var("APP_CONFIG_APP_NAME", "boring-oidc");
+        std::env::set_var("APP_CONFIG_PORT", "8080");
+        std::env::set_var("APP_CONFIG_DATABASE_HOST", "localhost");
+        std::env::set_var("APP_CONFIG_DATABASE_DB_PORT", "5432");
+        std::env::set_var("APP_CONFIG_DATABASE_CREDENTIALS_USERNAME", "admin");
     }
 
     let config = AppConfig::load().unwrap();
@@ -71,11 +71,11 @@ fn reports_all_missing_env_vars_across_nested_config() {
     let _guard = ENV_LOCK.lock().unwrap();
 
     unsafe {
-        std::env::remove_var("APP_NAME");
-        std::env::remove_var("PORT");
-        std::env::remove_var("DATABASE_HOST");
-        std::env::remove_var("DATABASE_DB_PORT");
-        std::env::remove_var("DATABASE_CREDENTIALS_USERNAME");
+        std::env::remove_var("APP_CONFIG_APP_NAME");
+        std::env::remove_var("APP_CONFIG_PORT");
+        std::env::remove_var("APP_CONFIG_DATABASE_HOST");
+        std::env::remove_var("APP_CONFIG_DATABASE_DB_PORT");
+        std::env::remove_var("APP_CONFIG_DATABASE_CREDENTIALS_USERNAME");
     }
 
     let err = AppConfig::load().unwrap_err();
@@ -83,34 +83,30 @@ fn reports_all_missing_env_vars_across_nested_config() {
     assert_eq!(
         err,
         ConfigError::MissingVars(vec![
-            "APP_NAME".to_string(),
-            "PORT".to_string(),
-            "DATABASE_HOST".to_string(),
-            "DATABASE_DB_PORT".to_string(),
-            "DATABASE_CREDENTIALS_USERNAME".to_string()
+            "APP_CONFIG_APP_NAME".to_string(),
+            "APP_CONFIG_PORT".to_string(),
+            "APP_CONFIG_DATABASE_HOST".to_string(),
+            "APP_CONFIG_DATABASE_DB_PORT".to_string(),
+            "APP_CONFIG_DATABASE_CREDENTIALS_USERNAME".to_string()
         ])
     );
 }
 
-// This tests actually shows that the api is broken because it
-// might be good to get the list of invalid too?
-// need to be careful here because a password
-// is actually not something we want to display.
 #[test]
 fn reports_invalid_env_var_after_required_vars_are_present() {
     let _guard = ENV_LOCK.lock().unwrap();
 
     unsafe {
-        std::env::set_var("APP_NAME", "boring-oidc");
-        std::env::set_var("PORT", "not-a-port");
-        std::env::set_var("DATABASE_HOST", "localhost");
-        std::env::set_var("DATABASE_DB_PORT", "5432");
-        std::env::set_var("DATABASE_CREDENTIALS_USERNAME", "admin");
+        std::env::set_var("APP_CONFIG_APP_NAME", "boring-oidc");
+        std::env::set_var("APP_CONFIG_PORT", "not-a-port");
+        std::env::set_var("APP_CONFIG_DATABASE_HOST", "localhost");
+        std::env::set_var("APP_CONFIG_DATABASE_DB_PORT", "5432");
+        std::env::set_var("APP_CONFIG_DATABASE_CREDENTIALS_USERNAME", "admin");
     }
 
     let err = AppConfig::load().unwrap_err();
 
-    assert!(matches!(err, ConfigError::InvalidVar { name, .. } if name == "PORT"));
+    assert!(matches!(err, ConfigError::InvalidVar { name, .. } if name == "APP_CONFIG_PORT"));
 }
 
 #[test]
@@ -118,11 +114,11 @@ fn defaults_just_work() {
     let _guard = ENV_LOCK.lock().unwrap();
 
     unsafe {
-        std::env::set_var("APP_NAME", "boring-oidc");
-        std::env::set_var("PORT", "8080");
-        std::env::set_var("DATABASE_HOST", "localhost");
-        std::env::set_var("DATABASE_DB_PORT", "5432");
-        std::env::set_var("DATABASE_CREDENTIALS_USERNAME", "admin");
+        std::env::set_var("APP_CONFIG_APP_NAME", "boring-oidc");
+        std::env::set_var("APP_CONFIG_PORT", "8080");
+        std::env::set_var("APP_CONFIG_DATABASE_HOST", "localhost");
+        std::env::set_var("APP_CONFIG_DATABASE_DB_PORT", "5432");
+        std::env::set_var("APP_CONFIG_DATABASE_CREDENTIALS_USERNAME", "admin");
     }
 
     let config = AppConfig::load().unwrap();

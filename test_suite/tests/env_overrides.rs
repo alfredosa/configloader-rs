@@ -50,10 +50,8 @@ fn loads_fields_from_explicit_env_names() {
     let _guard = ENV_LOCK.lock().unwrap();
 
     unsafe {
-        std::env::set_var("SERVICE_NAME", "accounts");
-        std::env::set_var("HTTP_PORT", "8080");
-        std::env::remove_var("NAME");
-        std::env::remove_var("PORT");
+        std::env::set_var("ENV_OVERRIDE_CONFIG_SERVICE_NAME", "accounts");
+        std::env::set_var("ENV_OVERRIDE_CONFIG_HTTP_PORT", "8080");
     }
 
     let config = EnvOverrideConfig::load().unwrap();
@@ -69,8 +67,6 @@ fn explicit_env_names_are_still_prefixed() {
     unsafe {
         std::env::set_var("APP_SERVICE_NAME", "accounts");
         std::env::set_var("APP_HTTP_PORT", "8080");
-        std::env::remove_var("SERVICE_NAME");
-        std::env::remove_var("HTTP_PORT");
     }
 
     let config = PrefixedEnvOverrideConfig::load().unwrap();
@@ -84,10 +80,8 @@ fn explicit_env_names_work_for_nested_prefixes_and_nested_fields() {
     let _guard = ENV_LOCK.lock().unwrap();
 
     unsafe {
-        std::env::set_var("DB_HOSTNAME", "localhost");
-        std::env::set_var("DB_PORT", "5432");
-        std::env::remove_var("DATABASE_HOST");
-        std::env::remove_var("DATABASE_PORT");
+        std::env::set_var("NESTED_ENV_OVERRIDE_CONFIG_DB_HOSTNAME", "localhost");
+        std::env::set_var("NESTED_ENV_OVERRIDE_CONFIG_DB_PORT", "5432");
     }
 
     let config = NestedEnvOverrideConfig::load().unwrap();
@@ -101,8 +95,7 @@ fn explicit_env_names_work_with_defaults() {
     let _guard = ENV_LOCK.lock().unwrap();
 
     unsafe {
-        std::env::remove_var("HTTP_PORT");
-        std::env::remove_var("PORT");
+        std::env::remove_var("DEFAULTED_ENV_OVERRIDE_CONFIG_HTTP_PORT");
     }
 
     let config = DefaultedEnvOverrideConfig::load().unwrap();
@@ -110,7 +103,7 @@ fn explicit_env_names_work_with_defaults() {
     assert_eq!(config.port, 8080);
 
     unsafe {
-        std::env::set_var("HTTP_PORT", "9000");
+        std::env::set_var("DEFAULTED_ENV_OVERRIDE_CONFIG_HTTP_PORT", "9000");
     }
 
     let config = DefaultedEnvOverrideConfig::load().unwrap();
@@ -123,17 +116,15 @@ fn reports_missing_explicit_env_names() {
     let _guard = ENV_LOCK.lock().unwrap();
 
     unsafe {
-        std::env::remove_var("SERVICE_NAME");
-        std::env::remove_var("HTTP_PORT");
-        std::env::remove_var("NAME");
-        std::env::remove_var("PORT");
+        std::env::remove_var("ENV_OVERRIDE_CONFIG_SERVICE_NAME");
+        std::env::remove_var("ENV_OVERRIDE_CONFIG_HTTP_PORT");
     }
 
     let err = EnvOverrideConfig::load().unwrap_err();
 
     assert_eq!(
         err,
-        ConfigError::MissingVars(vec!["SERVICE_NAME".to_string(), "HTTP_PORT".to_string()])
+        ConfigError::MissingVars(vec!["ENV_OVERRIDE_CONFIG_SERVICE_NAME".to_string(), "ENV_OVERRIDE_CONFIG_HTTP_PORT".to_string()])
     );
 }
 
@@ -142,8 +133,8 @@ fn reports_invalid_explicit_env_name() {
     let _guard = ENV_LOCK.lock().unwrap();
 
     unsafe {
-        std::env::set_var("SERVICE_NAME", "accounts");
-        std::env::set_var("HTTP_PORT", "not-a-port");
+        std::env::set_var("ENV_OVERRIDE_CONFIG_SERVICE_NAME", "accounts");
+        std::env::set_var("ENV_OVERRIDE_CONFIG_HTTP_PORT", "not-a-port");
     }
 
     let err = EnvOverrideConfig::load().unwrap_err();
@@ -151,6 +142,6 @@ fn reports_invalid_explicit_env_name() {
     assert!(matches!(
         err,
         ConfigError::InvalidVar { name, message }
-            if name == "HTTP_PORT" && !message.is_empty()
+            if name == "ENV_OVERRIDE_CONFIG_HTTP_PORT" && !message.is_empty()
     ));
 }
